@@ -1,0 +1,70 @@
+# https://golangci-lint.run/usage/configuration/
+#
+# The purpose of the linter is to write safe and sane Go code without interfering with code ergonomics.
+# Unfortunately Go has many limitations, some of which are placed on you by this linter.
+# Before //nolint:'ing consider other ways to discribe your intent in code.
+
+output:
+  sort-results: true
+
+linters:
+  enable-all: true
+
+severity:
+  default-severity: error
+
+# https://golangci-lint.run/usage/linters/
+#
+# Does the lint rule you are about to add make sense? Could the trigger be avoided by improving code quality?
+linters-settings:
+  nolintlint:
+    require-explanation: true
+    require-specific: true
+
+  lll:
+    line-length: 120
+    tab-width: 4
+
+  tagliatelle:
+    case:
+      use-field-name: true
+
+  varnamelen:
+    ignore-decls:
+      - t T
+      - t testing.T
+      - i int
+      - T any
+
+  forbidigo:
+    analyze-types: true
+    forbid:
+      - p: ^print.*$
+        msg: &shouldUseLoggingPackage all logging in the app should be done through `package logging`.
+      - p: ^fmt\.Print.*$
+        msg: *shouldUseLoggingPackage
+      - p: ^log\..*$
+        msg: *shouldUseLoggingPackage
+
+  govet:
+    check-shadowing: true
+    enable-all: true
+    settings:
+      printf:
+        funcs:
+          - (github/m-kuzmin/simple-rest-api/logging.Logger).Tracef
+          - (github/m-kuzmin/simple-rest-api/logging.Logger).Debugf
+          - (github/m-kuzmin/simple-rest-api/logging.Logger).Infof
+          - (github/m-kuzmin/simple-rest-api/logging.Logger).Warnf
+          - (github/m-kuzmin/simple-rest-api/logging.Logger).Errorf
+          - (github/m-kuzmin/simple-rest-api/logging.Logger).Fatalf
+      shadow:
+        strict: true # Not sure if this is necessary
+
+  depguard:
+    rules:
+      Tests:
+        files: [ $test ]
+        allow:
+          - $gostd
+          - github.com/m-kuzmin/simple-rest-api
