@@ -9,9 +9,15 @@ output:
 
 linters:
   enable-all: true
+  disable:
+    - nlreturn # Already covered by wsl and revive, and they are more permissive.
 
 severity:
   default-severity: error
+
+issues:
+  exclude:
+    - 'Example[A-Z][\w\d]+_[A-Z][\w\d]+ contains underscore.*' # Examples are required to be ExampleType_Method
 
 # https://golangci-lint.run/usage/linters/
 #

@@ -7,7 +7,7 @@ default: ci run
 # Test the code
 test:
 	@echo -ne "\n~~~ Running tests: "
-	go test -coverprofile /dev/stdout ./...
+	go test -coverprofile /dev/null ./...
 
 # Run the linter
 lint:
