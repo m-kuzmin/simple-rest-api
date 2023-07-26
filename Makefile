@@ -21,6 +21,12 @@ run:
 # Run the actions that the CI would run
 ci: test lint
 
+.PHONY: swagger
+
+# Generate swagger YAML and JSON files
+swagger:
+	swag init
+
 .PHONY: help
 
 # Help can only be displayed for rules that contain AZ09.-_ and have a comment immediately above the rule. Only the

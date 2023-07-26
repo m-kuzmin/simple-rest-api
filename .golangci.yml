@@ -71,6 +71,7 @@ linters-settings:
           - (github.com/m-kuzmin/simple-rest-api/logging.Logger).Warnf
           - (github.com/m-kuzmin/simple-rest-api/logging.Logger).Errorf
           - (github.com/m-kuzmin/simple-rest-api/logging.Logger).Fatalf
+          - github.com/m-kuzmin/simple-rest-api/api.errorResponsef
 
   depguard:
     rules:
