@@ -41,6 +41,9 @@ linters-settings:
       - t testing.T
       - i int
       - T any
+    ignore-names:
+      - id
+      - ID
 
   forbidigo:
     analyze-types: true
@@ -51,6 +54,10 @@ linters-settings:
         msg: *shouldUseLoggingPackage
       - p: ^log\..*$
         msg: *shouldUseLoggingPackage
+      - p: ^errors\.New$
+        msg: &dontCreateDynErrors consider the receiver of this error, how are they going to handle this error?
+      - p: ^fmt\.Errorf$
+        msg: *dontCreateDynErrors
 
   govet:
     check-shadowing: true
@@ -58,19 +65,24 @@ linters-settings:
     settings:
       printf:
         funcs:
-          - (github/m-kuzmin/simple-rest-api/logging.Logger).Tracef
-          - (github/m-kuzmin/simple-rest-api/logging.Logger).Debugf
-          - (github/m-kuzmin/simple-rest-api/logging.Logger).Infof
-          - (github/m-kuzmin/simple-rest-api/logging.Logger).Warnf
-          - (github/m-kuzmin/simple-rest-api/logging.Logger).Errorf
-          - (github/m-kuzmin/simple-rest-api/logging.Logger).Fatalf
-      shadow:
-        strict: true # Not sure if this is necessary
+          - (github.com/m-kuzmin/simple-rest-api/logging.Logger).Tracef
+          - (github.com/m-kuzmin/simple-rest-api/logging.Logger).Debugf
+          - (github.com/m-kuzmin/simple-rest-api/logging.Logger).Infof
+          - (github.com/m-kuzmin/simple-rest-api/logging.Logger).Warnf
+          - (github.com/m-kuzmin/simple-rest-api/logging.Logger).Errorf
+          - (github.com/m-kuzmin/simple-rest-api/logging.Logger).Fatalf
 
   depguard:
     rules:
+      All:
+        files: [ "!**/*_test.go" ]
+        allow:
+          - $gostd
+          - github.com/gin-gonic/gin
+          - github.com/m-kuzmin/simple-rest-api/
       Tests:
         files: [ $test ]
         allow:
           - $gostd
-          - github.com/m-kuzmin/simple-rest-api
+          - github.com/m-kuzmin/simple-rest-api/
+          - github.com/stretchr/testify/assert
