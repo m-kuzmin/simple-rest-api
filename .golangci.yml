@@ -11,6 +11,9 @@ linters:
   enable-all: true
   disable:
     - nlreturn # Already covered by wsl and revive, and they are more permissive.
+    - godot # Not all comments should end with a dot.
+    - ireturn # There is yet to be a usecase for this check. So far its in the way of developers
+    - depguard # Limited configuration options
 
 severity:
   default-severity: error
@@ -41,6 +44,7 @@ linters-settings:
       - t testing.T
       - i int
       - T any
+      - a []any
     ignore-names:
       - id
       - ID
@@ -54,10 +58,9 @@ linters-settings:
         msg: *shouldUseLoggingPackage
       - p: ^log\..*$
         msg: *shouldUseLoggingPackage
+
       - p: ^errors\.New$
         msg: &dontCreateDynErrors consider the receiver of this error, how are they going to handle this error?
-      - p: ^fmt\.Errorf$
-        msg: *dontCreateDynErrors
 
   govet:
     check-shadowing: true
@@ -73,17 +76,3 @@ linters-settings:
           - (github.com/m-kuzmin/simple-rest-api/logging.Logger).Fatalf
           - github.com/m-kuzmin/simple-rest-api/api.errorResponsef
 
-  depguard:
-    rules:
-      All:
-        files: [ "!**/*_test.go" ]
-        allow:
-          - $gostd
-          - github.com/gin-gonic/gin
-          - github.com/m-kuzmin/simple-rest-api/
-      Tests:
-        files: [ $test ]
-        allow:
-          - $gostd
-          - github.com/m-kuzmin/simple-rest-api/
-          - github.com/stretchr/testify/assert

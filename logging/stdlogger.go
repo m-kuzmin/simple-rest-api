@@ -35,5 +35,5 @@ func (StdLogger) Errorf(s string, a ...any) {
 
 // Fatalf implements Logger.
 func (StdLogger) Fatalf(s string, a ...any) {
-	log.Printf("[FATAL     E] %s", fmt.Sprintf(s, a...)) //nolint:forbidigo // Allowed here only
+	log.Fatalf("[FATAL     E] %s", fmt.Sprintf(s, a...)) //nolint:forbidigo // Allowed here only
 }

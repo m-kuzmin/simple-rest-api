@@ -16,6 +16,7 @@ lint:
 
 # Run the app natively (doesnt build)
 run:
+	@echo -ne "\n~~~ Starting the application: "
 	go run main.go
 
 # Run the actions that the CI would run
@@ -25,6 +26,7 @@ ci: test lint
 
 # Generate swagger YAML and JSON files
 swagger:
+	@echo -ne "\n~~~ Generating Swagger documentation: "
 	swag init
 
 .PHONY: help

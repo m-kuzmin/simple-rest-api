@@ -9,11 +9,20 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gin-gonic/gin"
 	"github.com/m-kuzmin/simple-rest-api/api"
 	"github.com/m-kuzmin/simple-rest-api/db"
 	"github.com/m-kuzmin/simple-rest-api/logging"
 	"github.com/stretchr/testify/assert"
 )
+
+func TestMain(m *testing.M) {
+	logging.GlobalLogger = logging.StdLogger{}
+
+	gin.SetMode(gin.TestMode)
+
+	m.Run()
+}
 
 func TestShouldSaveUsersToDatabase(t *testing.T) {
 	t.Parallel()
@@ -85,11 +94,26 @@ func TestShouldRejectCreateUsersBadCSV(t *testing.T) {
 	assert.Equal(t, http.StatusUnprocessableEntity, recorder.Code)
 }
 
-func TestShouldRejectCreateUsersNoBody(t *testing.T) {
+func TestShouldRejectCreateUsersNilBody(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
 	req, err := http.NewRequestWithContext(ctx, http.MethodPut, "/users", nil)
+	assert.Nil(t, err)
+	req.Header.Set("content-type", "text/csv")
+
+	recorder := httptest.NewRecorder()
+
+	ginRouter := api.NewGinRouter(api.NewServer(db.NewInMemoryDB()))
+	ginRouter.ServeHTTP(recorder, req)
+	assert.Equal(t, http.StatusUnprocessableEntity, recorder.Code)
+}
+
+func TestShouldRejectCreateUsersEmptyBody(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	req, err := http.NewRequestWithContext(ctx, http.MethodPut, "/users", strings.NewReader(""))
 	assert.Nil(t, err)
 	req.Header.Set("content-type", "text/csv")
 
@@ -122,10 +146,4 @@ func dbUsersToCSV(users []db.User) io.Reader {
 	}
 
 	return strings.NewReader(final)
-}
-
-func TestMain(m *testing.M) {
-	logging.GlobalLogger = logging.StdLogger{}
-
-	m.Run()
 }

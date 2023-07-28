@@ -22,8 +22,7 @@ type InMemoryDB struct {
 func (db *InMemoryDB) CreateUsers(_ context.Context, users []User) error {
 	db.Users = append(db.Users, users...)
 
-	logging.Debugf("InMemoryDB.CreateUsers called with args: %v", users)
-	logging.Tracef("InMemoryBD.Users: %v", db.Users)
+	logging.Debugf("InMemoryDB.Users: %v", db.Users)
 
 	return nil
 }
