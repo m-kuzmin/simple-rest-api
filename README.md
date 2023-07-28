@@ -17,12 +17,10 @@ A User has the following fields:
 
 # Tech stack
 
+- [Gin](https://github.com/gin-gonic/gin) router
 - [ ] Docker
 - [ ] PostgreSQL Database
 - [ ] REST docs using Swagger
-    - [ ] Online version hosted on GitHub Pages / Wiki
-    - [ ] Automated docs generation in the CI
 - Written in Golang
-- [ ] Gin for REST and HTTP stuff
-- [ ] TDD: CI (GitHub Actions) for automated builds and checks
+- TDD: CI (GitHub Actions) for automated builds and checks
 
