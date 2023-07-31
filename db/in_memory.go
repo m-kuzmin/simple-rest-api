@@ -18,7 +18,7 @@ type InMemoryDB struct {
 	Users []User
 }
 
-// CreateUsers implements Querier.
+// CreateUsers implements UserQuerier.
 func (db *InMemoryDB) CreateUsers(_ context.Context, users []User) error {
 	db.Users = append(db.Users, users...)
 
