@@ -1,8 +1,21 @@
-# Natively executed commands
-.PHONY: default build test lint run
+# Executing the application and testing
+.PHONY: default run ci test lint
 
 # Test and run the app
 default: ci run
+
+# Run the app natively (doesnt build)
+run:
+	@echo -ne "\n~~~ Starting the application: "
+	go run main.go
+
+# Run the actions that the CI would run
+ci: test lint
+	@echo -ne "\n~~~ Checking: "
+	sqlc diff
+	@
+	@echo -ne "\n~~~ Checking: "
+	sqlc vet
 
 # Test the code
 test:
@@ -14,14 +27,21 @@ lint:
 	@echo -ne "\n~~~ Running linter: "
 	golangci-lint run
 
-# Run the app natively (doesnt build)
-run:
-	@echo -ne "\n~~~ Starting the application: "
-	go run main.go
 
-# Run the actions that the CI would run
-ci: test lint
+# Shortcuts
+.PHONY: migrateup
+postgres_db=users
+postgres_password=secret
 
+# Migrate DB to latest schema
+migrateup:
+	@echo -ne "\n~~~ Migrating $(postgres_db) to latest schema: "
+	migrate \
+		-path db/migrations/ \
+		-database "postgresql://root:$(postgres_password)@localhost:5432/$(postgres_db)?sslmode=disable" \
+		-verbose up
+
+# File generation tools
 .PHONY: swagger
 
 # Generate swagger YAML and JSON files
