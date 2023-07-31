@@ -11,6 +11,7 @@ COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -o server .
 
 FROM $base_image
+EXPOSE 8000
 
 COPY --from=build /app/server /usr/bin/server
 CMD ["server"]

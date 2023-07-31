@@ -29,7 +29,7 @@ A User has the following fields:
 You will need docker installed.
 
 ```shell
-docker compose up
+docker compose up --build -d
 ```
 
 To stop the server run

@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 
 	"github.com/m-kuzmin/simple-rest-api/db/sqlc"
@@ -9,6 +10,17 @@ import (
 
 type Postgres struct {
 	conn *sqlc.Queries
+}
+
+func NewPostgres(dbSource string) (*Postgres, error) {
+	conn, err := sql.Open("postgres", dbSource)
+	if err != nil {
+		return nil, fmt.Errorf("while connecting to postgres (%q): %w", dbSource, err)
+	}
+
+	return &Postgres{
+		conn: sqlc.New(conn),
+	}, nil
 }
 
 // CreateUsers implements UserQuerier.
