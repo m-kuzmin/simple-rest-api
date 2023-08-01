@@ -4,7 +4,7 @@
 
 # Features
 
-- [ ] An endpoint to create user(s) by uploading a CSV file
+- An endpoint to create user(s) by uploading a CSV file
 - [ ] An endpoint to search the users database
 
 A User has the following fields:
@@ -21,8 +21,8 @@ A User has the following fields:
 - PostgreSQL Database
 - Written in Golang
 - TDD: CI (GitHub Actions) for automated builds and checks
-- [ ] Docker
-- [ ] REST docs using Swagger
+- Docker
+- [ ] REST docs using Swagger UI
 
 # Running the server
 
@@ -32,6 +32,9 @@ You will need docker installed.
 docker compose up --build -d
 ```
 
+- `--build` Makes sure the images for all services are (re-)built
+- `-d` Makes the containers run in detached mode.
+
 To stop the server run
 
 ```shell
@@ -40,18 +43,32 @@ docker compose down
 
 # Commands for development
 
-## Checking the code locally
+## Testing the code locally
 
 The Makefile contains a help command that prints out a list of commands. You can add a comment above any command to
-include it in the help message. Only the first comment line directly above the command will be printed.
+include it in the help message. Only the first comment line directly above the command will be printed. Here is an
+example:
 
-Most of the time you would want to run either:
-
+```makefile
+# Help is awesome, but awk is complicated. Also this line isnt part of `make help`.
+# Print the help message
+help:
+```
 ```shell
-make ci
-# or
-make
+$ make help
+Malefile help:
+
+help   Print the help message
 ```
 
-The `ci` command performs checks that the remote CI on GitHub would do, just does them locally. When adding a new check,
-add it to actions first and then to the makefile to make sure GitHub actions contain all checks neccessary.
+Most of the time you would want to run `make ci` which runs the tests and the linter. However the tests also need a
+postgres database so you should start it first:
+
+```shell
+docker compose up -d postgres
+make ci
+```
+
+The `make ci` command performs checks that the remote CI on GitHub would do, just does them locally. When adding a new
+check, add it to GitHub Actions workflow first and then to the makefile to make sure GitHub actions contain all
+neccessary tests.
