@@ -2,11 +2,13 @@ package sqlc_test
 
 import (
 	"database/sql"
-	"log"
 	"testing"
 
+	_ "github.com/golang-migrate/migrate/source/file"
 	_ "github.com/lib/pq"
+	"github.com/m-kuzmin/simple-rest-api/db"
 	"github.com/m-kuzmin/simple-rest-api/db/sqlc"
+	"github.com/m-kuzmin/simple-rest-api/logging"
 )
 
 const (
@@ -17,9 +19,15 @@ const (
 var testQueries *sqlc.Queries //nolint:gochecknoglobals // This is used by all tests to connect to the DB.
 
 func TestMain(m *testing.M) {
+	logging.GlobalLogger = logging.StdLogger{}
+
 	conn, err := sql.Open(dbDriver, dbSource)
 	if err != nil {
-		log.Fatal("Cannot connect to database:", err) //nolint:forbidigo // Fine in tests
+		logging.Fatalf("Cannot connect to database: %s", err)
+	}
+
+	if err = db.PostgresMigrateUp(conn, "file://../migrations", "users"); err != nil {
+		logging.Fatalf("Failed to migrate test db: %s", err)
 	}
 
 	testQueries = sqlc.New(conn)

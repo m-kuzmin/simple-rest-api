@@ -1,13 +1,8 @@
 # Executing the application and testing
 .PHONY: default run ci test lint
 
-# Test and run the app
-default: ci run
-
-# Run the app natively (doesnt build)
-run:
-	@echo -ne "\n~~~ Starting the application: "
-	go run main.go
+# Run the CI
+default: ci
 
 # Run the actions that the CI would run
 ci: test lint

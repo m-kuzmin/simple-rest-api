@@ -10,15 +10,18 @@ import (
 	"github.com/golang-migrate/migrate"
 	"github.com/golang-migrate/migrate/database/postgres"
 	"github.com/m-kuzmin/simple-rest-api/db/sqlc"
+	"github.com/m-kuzmin/simple-rest-api/logging"
 )
 
 type Postgres struct {
-	conn *sqlc.Queries
+	sqlDB *sql.DB
+	conn  *sqlc.Queries
 }
 
 func NewPostgres(conn *sql.DB) *Postgres {
 	return &Postgres{
-		conn: sqlc.New(conn),
+		conn:  sqlc.New(conn),
+		sqlDB: conn,
 	}
 }
 
@@ -36,6 +39,14 @@ func (db *Postgres) CreateUsers(ctx context.Context, users []User) error {
 		if err := db.conn.CreateUser(ctx, arg); err != nil {
 			return fmt.Errorf("PostgreSQL error: %w", err)
 		}
+	}
+
+	return nil
+}
+
+func (db *Postgres) Close() error {
+	if err := db.sqlDB.Close(); err != nil {
+		return fmt.Errorf("failed to close sql connection handle: %w", err)
 	}
 
 	return nil
@@ -73,7 +84,13 @@ func ConnectToDBWithRetry(postgresDriver, postgresAddr string, retries uint, int
 	for i := uint(0); i < retries; i++ {
 		err = conn.Ping()
 		if err != nil {
+			if i > 0 {
+				logging.Warnf("Retry %d: Pinging PostgreSQL after %s because it has not started yet", i,
+					interval.String())
+			}
+
 			time.Sleep(interval)
+
 			continue
 		}
 

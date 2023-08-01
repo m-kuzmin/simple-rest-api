@@ -14,6 +14,8 @@ linters:
     - godot # Not all comments should end with a dot.
     - ireturn # There is yet to be a usecase for this check. So far its in the way of developers
     - depguard # Limited configuration options
+    - exhaustruct
+    - exhaustivestruct
 
 severity:
   default-severity: error
