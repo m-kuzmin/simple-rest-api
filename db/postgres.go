@@ -3,8 +3,12 @@ package db
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
+	"time"
 
+	"github.com/golang-migrate/migrate"
+	"github.com/golang-migrate/migrate/database/postgres"
 	"github.com/m-kuzmin/simple-rest-api/db/sqlc"
 )
 
@@ -12,15 +16,10 @@ type Postgres struct {
 	conn *sqlc.Queries
 }
 
-func NewPostgres(dbSource string) (*Postgres, error) {
-	conn, err := sql.Open("postgres", dbSource)
-	if err != nil {
-		return nil, fmt.Errorf("while connecting to postgres (%q): %w", dbSource, err)
-	}
-
+func NewPostgres(conn *sql.DB) *Postgres {
 	return &Postgres{
 		conn: sqlc.New(conn),
-	}, nil
+	}
 }
 
 // CreateUsers implements UserQuerier.
@@ -40,4 +39,46 @@ func (db *Postgres) CreateUsers(ctx context.Context, users []User) error {
 	}
 
 	return nil
+}
+
+func PostgresMigrateUp(db *sql.DB, migrationsSource, dbName string) error {
+	driver, err := postgres.WithInstance(db, &postgres.Config{
+		MigrationsTable: "migrations",
+		DatabaseName:    dbName,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to create PostgreSQL database driver: %w", err)
+	}
+
+	migrator, err := migrate.NewWithDatabaseInstance(migrationsSource, dbName, driver)
+	if err != nil {
+		return fmt.Errorf("failed to create migrate client: %w", err)
+	}
+
+	if err = migrator.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
+		return fmt.Errorf("failed to migrate the database: %w", err)
+	}
+
+	return nil
+}
+
+func ConnectToDBWithRetry(postgresDriver, postgresAddr string, retries uint, interval time.Duration,
+) (*sql.DB, error) {
+	conn, err := sql.Open(postgresDriver, postgresAddr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create sql database connection to %q with driver %q: %w", postgresAddr,
+			postgresDriver, err)
+	}
+
+	for i := uint(0); i < retries; i++ {
+		err = conn.Ping()
+		if err != nil {
+			time.Sleep(interval)
+			continue
+		}
+
+		return conn, nil
+	}
+
+	return nil, fmt.Errorf("failed to ping database %q after %d attempts: %w", postgresAddr, retries, err)
 }

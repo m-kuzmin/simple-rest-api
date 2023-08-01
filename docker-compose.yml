@@ -1,14 +1,21 @@
 version: '3'
+
 services:
   rest-api:
     build: .
-    expose: [ "8000:8000" ]
     ports: [ "8000:8000" ]
+    networks: [ database ]
     depends_on: [ postgres ]
+
   postgres:
     image: postgres:12-alpine
     ports: [ "5432:5432" ]
+    networks: [ database ]
     environment:
       POSTGRES_USER: root
       POSTGRES_PASSWORD: secret
       POSTGRES_DB: users
+
+networks:
+  database:
+    driver: bridge

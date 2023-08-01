@@ -14,4 +14,5 @@ FROM $base_image
 EXPOSE 8000
 
 COPY --from=build /app/server /usr/bin/server
+COPY db/migrations/ /migrations
 CMD ["server"]

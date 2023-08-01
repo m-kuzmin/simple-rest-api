@@ -27,20 +27,6 @@ lint:
 	@echo -ne "\n~~~ Running linter: "
 	golangci-lint run
 
-
-# Shortcuts
-.PHONY: migrateup
-postgres_db=users
-postgres_password=secret
-
-# Migrate DB to latest schema
-migrateup:
-	@echo -ne "\n~~~ Migrating $(postgres_db) to latest schema: "
-	migrate \
-		-path db/migrations/ \
-		-database "postgresql://root:$(postgres_password)@localhost:5432/$(postgres_db)?sslmode=disable" \
-		-verbose up
-
 # File generation tools
 .PHONY: swagger
 
