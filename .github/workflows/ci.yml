@@ -25,32 +25,6 @@ jobs:
         uses: actions/checkout@v3
       - name: Set up Golang
         uses: actions/setup-go@v4
-
-      - name: Cache migrate exe
-        id: cache-migrate
-        uses: actions/cache@v3
-        with:
-          path: migrate
-          key: ${{ runner.os }}-migrate-exe
-
-      - name: Download migrate tool
-        if: steps.cache-migrate.outputs.cache-hit != 'true'
-        run: >
-          curl -L https://github.com/golang-migrate/migrate/releases/download/v4.14.1/migrate.linux-amd64.tar.gz
-          | tar xvz
-          && mv migrate.linux-amd64 migrate
-          && echo "faaf3c4c96b6a5fb55a1b29888deb473aacbb47a858dafa7e586e1587c968265  migrate"
-          | sha256sum -c -
-
-      - name: Move migrate to /usr/bin
-        run: sudo cp migrate /usr/bin/migrate
-
-      - name: Prepare PostgreSQL
-        run: >
-          migrate
-          -path db/migrations/
-          -database "postgresql://root:secret@localhost:5432/users?sslmode=disable"
-          -verbose up
       - name: Run tests
         run: go test -coverprofile /dev/null ./...
 
