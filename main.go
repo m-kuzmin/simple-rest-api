@@ -53,15 +53,18 @@ func main() {
 
 	err := httpServer.Shutdown(context.Background())
 	if err != nil {
-		logging.Fatalf("Error during shutdown: %s", err)
+		logging.Errorf("[1/2] Error during shutdown: %s", err)
+	} else {
+		logging.Infof("[1/2] HTTP handler stopped")
 	}
-	logging.Infof("[1/2] HTTP handler stopped")
 
 	if err = postgres.Close(); err != nil {
-		logging.Errorf("Error closing PostgreSQL connection: %s", err)
+		logging.Errorf("[2/2] Error closing PostgreSQL connection: %s", err)
+	} else {
+		logging.Infof("[2/2] SQL connection closed")
 	}
-	logging.Infof("[2/2] SQL connection closed")
-	logging.Infof("Server gracefully shut down")
+
+	logging.Infof("Server stopped.")
 }
 
 func StartServer(engine http.Handler) *http.Server {

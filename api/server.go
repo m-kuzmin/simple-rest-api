@@ -1,5 +1,9 @@
 package api
 
+// @title Simple REST API
+// @version 0.1.0
+// @description A simple REST API server with PostgreSQL database
+
 import (
 	"context"
 	"encoding/csv"
@@ -20,18 +24,29 @@ func NewServer(db db.Querier) *Server {
 	return &Server{db: db}
 }
 
-// @Summary Add users to database
-// @Description Add users to database by uploading a CSV file
-// @Accept text/csv
-// @Produce json
-// @Success 201
 // @Router /users [put]
+// @Summary Add users to database
+// @Description Add users to database by uploading a CSV file or sending a CSV body
+// @Accept text/csv
+// @Param CSVBody body string true "CSV string"
+// @Produce json
+// @Success 201 {object} api.CreateOrUpdateUsers.responseOk "Data was saved to database."
+// @Failure 415 {object} api.CreateOrUpdateUsers.responseErr "Content-Type must be text/csv."
+// @Failure 422 {object} api.CreateOrUpdateUsers.responseErr "Either empty or malformed body. Should be CSV."
+// @Failure 500 {object} api.CreateOrUpdateUsers.responseErr "Errors from PostgreSQL"
 func (s *Server) CreateOrUpdateUsers(ctx *gin.Context) {
+	type responseOk struct {
+		Ok bool `json:"ok" example:"true"`
+	}
+
+	type responseErr struct {
+		Error string `json:"error" example:"Human readable error"`
+		Ok    bool   `json:"ok" example:"false"`
+	}
+
 	tape := logging.NewTape(
-		logging.DebugLevel,
-		logging.NewPrefixedLogger(logging.GlobalLogger, "(Tape (APICall PUT /users))"),
-		logging.ErrorLevel,
-		logging.NewPrefixedLogger(logging.GlobalLogger, "(APICall PUT /users)"),
+		logging.DebugLevel, logging.NewPrefixedLogger(logging.GlobalLogger, "(Tape (APICall PUT /users))"),
+		logging.ErrorLevel, logging.NewPrefixedLogger(logging.GlobalLogger, "(APICall PUT /users)"),
 	)
 
 	tape.Debugf("%#v", ctx.Request)

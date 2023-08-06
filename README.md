@@ -22,7 +22,7 @@ A User has the following fields:
 - Written in Golang
 - TDD: CI (GitHub Actions) for automated builds and checks
 - Docker
-- [ ] REST docs using Swagger UI
+- REST docs using Swagger UI (`/swaggerui/index.html`)
 
 # Running the server
 
@@ -72,3 +72,10 @@ make ci
 The `make ci` command performs checks that the remote CI on GitHub would do, just does them locally. When adding a new
 check, add it to GitHub Actions workflow first and then to the makefile to make sure GitHub actions contain all
 neccessary tests.
+
+# Explanation of the build process
+
+The application has only 1 build script - Dockerfile. There are no other ways to build or run this app. This is because
+the build process includes generating swagger docs and the app also needs to have a PostgreSQL database. It is easier to
+maintain one build script (Dockerfile + docker-compose.yml) than doing it in a Makefile *and* in docker. The makefile is
+just for emulating the CI locally.
