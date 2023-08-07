@@ -1,0 +1,17 @@
+database: # postgresql://$user:$password@$host:$port/$database?sslmode=disable
+  user: "root"
+  password: "secret"
+
+  host: "postgres"
+  port: 5432
+  database: "users"
+
+rest_api:
+  address: ":8000" # Which host/port to expose
+  readTimeoutSecs: 60 # Prevents people from opening a connection and not sending any data.
+
+  swagger: true # You can also do `swagger: /swagger-endpoint`, default is /swaggerui, false disables swagger.
+
+  database_connection: # Every $interval seconds, $retries times try to connect to postgres.
+    retries: 5
+    interval: 7

@@ -6,6 +6,8 @@ services:
     ports: [ "8000:8000" ]
     networks: [ database ]
     depends_on: [ postgres ]
+    volumes:
+      - ./config:/etc/simple-rest-api.d:ro
 
   postgres:
     image: postgres:12-alpine
