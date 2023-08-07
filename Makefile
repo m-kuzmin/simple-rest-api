@@ -6,7 +6,10 @@
 .PHONY: default ci test lint
 
 # (default) Run the actions that the CI would run
-ci: test lint
+ci: sqlc test lint
+
+# Run SQLC checks
+sqlc:
 	@echo -ne "\n~~~ Checking: "
 	sqlc diff
 	@

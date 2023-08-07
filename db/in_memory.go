@@ -26,3 +26,7 @@ func (db *InMemoryDB) CreateUsers(_ context.Context, users []User) error {
 
 	return nil
 }
+
+func (*InMemoryDB) SearchUsers(_ context.Context, _, _, _, _ string) ([]User, error) {
+	panic("Use the real database instead of the mock one")
+}

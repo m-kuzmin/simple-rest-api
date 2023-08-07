@@ -123,7 +123,7 @@ func loadConfig() (*config, error) {
 	}
 
 	switch conf.RestAPI.Swagger {
-	case "true", "1":
+	case "true", "1": // In yaml "true" => "true" and true => "1". Note the quotes around the value.
 		conf.RestAPI.Swagger = "swaggerui"
 	case "false", "0":
 		conf.RestAPI.Swagger = ""

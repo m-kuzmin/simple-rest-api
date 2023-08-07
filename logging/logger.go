@@ -27,7 +27,7 @@ silence this logger then you should set the value to NilLogger.
 */
 var GlobalLogger Logger //nolint:gochecknoglobals // This is a stateless global logger for the entire app.
 
-func init() { //nolint:gochecknoinits // For logging its ok to have global stuff
+func init() { //nolint:gochecknoinits // This ensures the logger is not a `nil`.
 	GlobalLogger = NilLogger{}
 }
 

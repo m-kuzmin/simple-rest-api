@@ -73,6 +73,8 @@ linters-settings:
   govet:
     check-shadowing: true
     enable-all: true
+    disable:
+      - fieldalignment
     settings:
       printf:
         funcs:
@@ -84,3 +86,6 @@ linters-settings:
           - (github.com/m-kuzmin/simple-rest-api/logging.Logger).Fatalf
           - github.com/m-kuzmin/simple-rest-api/api.errorResponsef
 
+  gosec:
+    excludes:
+      - G404 # math/rand

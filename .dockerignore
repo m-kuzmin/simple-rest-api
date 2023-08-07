@@ -6,3 +6,4 @@
 .golangci.yml
 Makefile
 config/
+**/*_test.go

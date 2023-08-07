@@ -27,7 +27,7 @@ func NewPostgres(conn *sql.DB) *Postgres {
 
 // CreateUsers implements UserQuerier.
 func (db *Postgres) CreateUsers(ctx context.Context, users []User) error {
-	for _, user := range users {
+	for i, user := range users {
 		arg := sqlc.CreateUserParams{
 			ID:          user.ID,
 			Name:        user.Name,
@@ -37,11 +37,43 @@ func (db *Postgres) CreateUsers(ctx context.Context, users []User) error {
 		}
 
 		if err := db.conn.CreateUser(ctx, arg); err != nil {
-			return fmt.Errorf("PostgreSQL error: %w", err)
+			return fmt.Errorf("PostgreSQL error while inserting record #%d: %w", i, err)
 		}
 	}
 
 	return nil
+}
+
+func (db *Postgres) SearchUsers(ctx context.Context, name, phoneNumber, country, city string) ([]User, error) {
+	arg := sqlc.SearchUsersParams{}
+
+	if name != "" {
+		arg.Column1 = sql.NullString{Valid: true, String: name}
+	}
+
+	if phoneNumber != "" {
+		arg.Column2 = sql.NullString{Valid: true, String: phoneNumber}
+	}
+
+	if country != "" {
+		arg.Column3 = sql.NullString{Valid: true, String: country}
+	}
+
+	if city != "" {
+		arg.Column4 = sql.NullString{Valid: true, String: city}
+	}
+
+	sqlUsers, err := db.conn.SearchUsers(ctx, arg)
+	if err != nil {
+		return nil, fmt.Errorf("search failed: %w", err)
+	}
+
+	users := make([]User, len(sqlUsers))
+	for i, user := range sqlUsers {
+		users[i] = User(user)
+	}
+
+	return users, nil
 }
 
 func (db *Postgres) Close() error {
