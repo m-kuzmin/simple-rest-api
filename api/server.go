@@ -125,3 +125,55 @@ func ParseUsersCSV(reader *csv.Reader) ([]db.User, error) {
 
 	return users, nil
 }
+
+// @Router /users/search [get]
+// @Summary Search the database by column(s)
+// @Description Returns all rows that contain the substring from the query in the respective column
+// @Param name query string false "Reject all rows where name doesnt contain the substring"
+// @Param phone_number query string false "Reject all rows where phone_number doesnt contain the substring"
+// @Param country query string false "Reject all rows where country doesnt contain the substring"
+// @Param city query string false "Reject all rows where city doesnt contain the substring"
+// @Produce json
+// @Success 302 {object} api.SearchUsers.responseOk "0+ JSON encoded objects"
+// @Failure 400 {object} api.SearchUsers.responseErr "0 `?field=` criteria provided. Should have at least one."
+// @Failure 500 {object} api.SearchUsers.responseErr "Errors from PostgreSQL"
+func (s *Server) SearchUsers(ctx *gin.Context) {
+	type responseOk struct {
+		Ok      bool      `json:"ok" example:"true"`
+		Results []db.User `json:"results"`
+	}
+
+	type responseErr struct {
+		Error string `json:"error" example:"Human readable error"`
+		Ok    bool   `json:"ok" example:"false"`
+	}
+
+	tape := logging.NewTape(
+		logging.DebugLevel, logging.NewPrefixedLogger(logging.GlobalLogger, "(Tape (APICall GET /users/search))"),
+		logging.ErrorLevel, logging.NewPrefixedLogger(logging.GlobalLogger, "(APICall GET /users/search)"),
+	)
+
+	tape.Debugf("Request: %v", ctx.Request)
+
+	name := ctx.Query("name")
+	phoneNumber := ctx.Query("phone_number")
+	country := ctx.Query("country")
+	city := ctx.Query("city")
+
+	if name == "" && phoneNumber == "" && country == "" && city == "" {
+		tape.Errorf("Empty search query")
+		errorResponse(ctx, http.StatusBadRequest, "Empty search criteria")
+
+		return
+	}
+
+	users, err := s.db.SearchUsers(context.Background(), name, phoneNumber, country, city)
+	if err != nil {
+		tape.Errorf("Database error: %s", err)
+		errorResponsef(ctx, http.StatusInternalServerError, "Database error: %s", err)
+
+		return
+	}
+
+	ctx.JSON(http.StatusFound, gin.H{"ok": true, "results": users})
+}

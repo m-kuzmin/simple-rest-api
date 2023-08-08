@@ -4,25 +4,17 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"math/rand"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
-	"github.com/gin-gonic/gin"
+	"github.com/docker/docker/testutil"
 	"github.com/m-kuzmin/simple-rest-api/api"
 	"github.com/m-kuzmin/simple-rest-api/db"
-	"github.com/m-kuzmin/simple-rest-api/logging"
 	"github.com/stretchr/testify/assert"
 )
-
-func TestMain(m *testing.M) {
-	logging.GlobalLogger = logging.StdLogger{}
-
-	gin.SetMode(gin.TestMode)
-
-	m.Run()
-}
 
 func TestShouldSaveUsersToDatabase(t *testing.T) {
 	t.Parallel()
@@ -30,18 +22,18 @@ func TestShouldSaveUsersToDatabase(t *testing.T) {
 	ctx := context.Background()
 	users := []db.User{ // Users that will be saved to DB
 		{
-			Name:        "John Doe",
-			PhoneNumber: "18001234567",
-			Country:     "US",
-			City:        "New York City",
-			ID:          1,
+			ID:          rand.Int63(),
+			Name:        testutil.GenerateRandomAlphaOnlyString(10),
+			PhoneNumber: testutil.GenerateRandomAlphaOnlyString(10),
+			Country:     testutil.GenerateRandomAlphaOnlyString(10),
+			City:        testutil.GenerateRandomAlphaOnlyString(10),
 		},
 		{
-			Name:        "Florida Man",
-			PhoneNumber: "18002234567",
-			Country:     "US",
-			City:        "Florida City",
-			ID:          2,
+			ID:          rand.Int63(),
+			Name:        testutil.GenerateRandomAlphaOnlyString(10),
+			PhoneNumber: testutil.GenerateRandomAlphaOnlyString(10),
+			Country:     testutil.GenerateRandomAlphaOnlyString(10),
+			City:        testutil.GenerateRandomAlphaOnlyString(10),
 		},
 	}
 

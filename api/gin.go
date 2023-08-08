@@ -9,6 +9,7 @@ func NewGinRouter(server *Server) *gin.Engine {
 	router := gin.New()
 
 	router.PUT("/users", server.CreateOrUpdateUsers)
+	router.GET("/users/search", server.SearchUsers)
 
 	logging.Infof("Gin router is set-up.")
 

@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"testing"
 
+	"github.com/docker/docker/testutil"
 	"github.com/m-kuzmin/simple-rest-api/db/sqlc"
 	"github.com/stretchr/testify/assert"
 )
@@ -19,10 +20,10 @@ func TestShouldCreateAccount(t *testing.T) {
 	ctx := context.Background()
 	arg := sqlc.CreateUserParams{
 		ID:          userID,
-		Name:        "John Doe",
-		PhoneNumber: "18001234567",
-		Country:     "US",
-		City:        "New York",
+		Name:        testutil.GenerateRandomAlphaOnlyString(10),
+		PhoneNumber: testutil.GenerateRandomAlphaOnlyString(10),
+		Country:     testutil.GenerateRandomAlphaOnlyString(10),
+		City:        testutil.GenerateRandomAlphaOnlyString(10),
 	}
 
 	err := testQueries.CreateUser(ctx, arg)
@@ -41,10 +42,10 @@ func TestShouldFindAtLeastOneRowWithEmptyQuery(t *testing.T) {
 	ctx := context.Background()
 	createParams := sqlc.CreateUserParams{
 		ID:          userID,
-		Name:        RandomString(10),
-		PhoneNumber: RandomString(10),
-		Country:     RandomString(10),
-		City:        RandomString(10),
+		Name:        testutil.GenerateRandomAlphaOnlyString(10),
+		PhoneNumber: testutil.GenerateRandomAlphaOnlyString(10),
+		Country:     testutil.GenerateRandomAlphaOnlyString(10),
+		City:        testutil.GenerateRandomAlphaOnlyString(10),
 	}
 
 	err := testQueries.CreateUser(ctx, createParams)
@@ -77,10 +78,10 @@ func TestShouldFindRowWithMissingParams(t *testing.T) {
 	ctx := context.Background()
 	createParams := sqlc.CreateUserParams{
 		ID:          userID,
-		Name:        RandomString(10),
-		PhoneNumber: RandomString(10),
-		Country:     RandomString(10),
-		City:        RandomString(10),
+		Name:        testutil.GenerateRandomAlphaOnlyString(10),
+		PhoneNumber: testutil.GenerateRandomAlphaOnlyString(10),
+		Country:     testutil.GenerateRandomAlphaOnlyString(10),
+		City:        testutil.GenerateRandomAlphaOnlyString(10),
 	}
 
 	err := testQueries.CreateUser(ctx, createParams)
@@ -96,7 +97,7 @@ func TestShouldFindRowWithMissingParams(t *testing.T) {
 	users, err := testQueries.SearchUsers(ctx, findParams)
 	assert.NoError(t, err, "While searching for the user")
 
-	t.Log("Searched for user")
+	t.Log("Searched for the user")
 
 	assert.Equal(t, users, []sqlc.User{sqlc.User(createParams)})
 

@@ -14,9 +14,9 @@ type UserQuerier interface {
 }
 
 type User struct {
-	ID          int64
-	Name        string
-	PhoneNumber string
-	Country     string
-	City        string
+	ID          int64  `json:"id"`
+	Name        string `json:"name"`
+	PhoneNumber string `json:"phone_number"`
+	Country     string `json:"country"`
+	City        string `json:"city"`
 }
