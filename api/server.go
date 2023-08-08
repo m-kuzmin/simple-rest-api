@@ -24,11 +24,12 @@ func NewServer(db db.Querier) *Server {
 	return &Server{db: db}
 }
 
-// @Router /users [put]
+// @Router /users [post]
 // @Summary Add users to database
-// @Description Add users to database by uploading a CSV file or sending a CSV body
+// @Description Add users to database by uploading a CSV file or sending a CSV body.
+// @Description The ID must not be already in the database.
 // @Accept text/csv
-// @Param CSVBody body string true "CSV string"
+// @Param CSV body string true "CSV string"
 // @Produce json
 // @Success 201 {object} api.CreateOrUpdateUsers.responseOk "Data was saved to database."
 // @Failure 415 {object} api.CreateOrUpdateUsers.responseErr "Content-Type must be text/csv."

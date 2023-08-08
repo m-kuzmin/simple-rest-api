@@ -38,7 +38,7 @@ func TestShouldSaveUsersToDatabase(t *testing.T) {
 	}
 
 	// Create a request that will save the users
-	req, err := http.NewRequestWithContext(ctx, http.MethodPut, "/users", dbUsersToCSV(users))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, "/users", dbUsersToCSV(users))
 	assert.Nil(t, err)
 	req.Header.Set("content-type", "text/csv")
 
@@ -55,11 +55,11 @@ func TestShouldSaveUsersToDatabase(t *testing.T) {
 	assert.Equal(t, users, database.Users)
 }
 
-func TestShouldRejectCreateUsersWrongContentType(t *testing.T) {
+func TestShouldRejectCreateUsersNoContentType(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
-	req, err := http.NewRequestWithContext(ctx, http.MethodPut, "/users", nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, "/users", nil)
 	assert.Nil(t, err)
 
 	recorder := httptest.NewRecorder()
@@ -75,7 +75,7 @@ func TestShouldRejectCreateUsersBadCSV(t *testing.T) {
 	const badCSV = "notid,blablabla,,,"
 
 	ctx := context.Background()
-	req, err := http.NewRequestWithContext(ctx, http.MethodPut, "/users", strings.NewReader(badCSV))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, "/users", strings.NewReader(badCSV))
 	assert.Nil(t, err)
 	req.Header.Set("content-type", "text/csv")
 
@@ -90,7 +90,7 @@ func TestShouldRejectCreateUsersNilBody(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
-	req, err := http.NewRequestWithContext(ctx, http.MethodPut, "/users", nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, "/users", nil)
 	assert.Nil(t, err)
 	req.Header.Set("content-type", "text/csv")
 
@@ -105,7 +105,7 @@ func TestShouldRejectCreateUsersEmptyBody(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
-	req, err := http.NewRequestWithContext(ctx, http.MethodPut, "/users", strings.NewReader(""))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, "/users", strings.NewReader(""))
 	assert.Nil(t, err)
 	req.Header.Set("content-type", "text/csv")
 
@@ -120,7 +120,7 @@ func TestShouldRejectCreateUsersBadMethod(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, "/users", nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPut, "/users", nil)
 	assert.Nil(t, err)
 
 	recorder := httptest.NewRecorder()
