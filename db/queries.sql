@@ -8,3 +8,12 @@ INSERT INTO users (
 -- name: DeleteUserByID :exec
 DELETE FROM users
 WHERE id = $1;
+
+-- name: SearchUsers :many
+SELECT *
+FROM users
+WHERE
+    (name         LIKE '%' || $1 || '%' OR $1 IS NULL) AND
+    (phone_number LIKE '%' || $2 || '%' OR $2 IS NULL) AND
+    (country      LIKE '%' || $3 || '%' OR $3 IS NULL) AND
+    (city         LIKE '%' || $4 || '%' OR $4 IS NULL);

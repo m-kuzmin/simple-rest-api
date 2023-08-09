@@ -1,0 +1,9 @@
+**/README.md
+.git
+**/.gitattributes
+**/.gitignore
+.github/
+.golangci.yml
+Makefile
+config/
+**/*_test.go

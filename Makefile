@@ -1,11 +1,15 @@
-# Executing the application and testing
-.PHONY: default run ci test lint
+# This makefile is for developers. The application can be started with:
+# ```shell
+# docker compose up --build -d
+# ```
 
-# Run the CI
-default: ci
+.PHONY: default ci test lint
 
-# Run the actions that the CI would run
-ci: test lint
+# (default) Run the actions that the CI would run
+ci: sqlc test lint
+
+# Run SQLC checks
+sqlc:
 	@echo -ne "\n~~~ Checking: "
 	sqlc diff
 	@
@@ -21,14 +25,6 @@ test:
 lint:
 	@echo -ne "\n~~~ Running linter: "
 	golangci-lint run
-
-# File generation tools
-.PHONY: swagger
-
-# Generate swagger YAML and JSON files
-swagger:
-	@echo -ne "\n~~~ Generating Swagger documentation: "
-	swag init
 
 .PHONY: help
 

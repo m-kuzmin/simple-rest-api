@@ -7,6 +7,7 @@ package sqlc
 
 import (
 	"context"
+	"database/sql"
 )
 
 const createUser = `-- name: CreateUser :exec
@@ -44,4 +45,55 @@ WHERE id = $1
 func (q *Queries) DeleteUserByID(ctx context.Context, id int64) error {
 	_, err := q.db.ExecContext(ctx, deleteUserByID, id)
 	return err
+}
+
+const searchUsers = `-- name: SearchUsers :many
+SELECT id, name, phone_number, country, city
+FROM users
+WHERE
+    (name         LIKE '%' || $1 || '%' OR $1 IS NULL) AND
+    (phone_number LIKE '%' || $2 || '%' OR $2 IS NULL) AND
+    (country      LIKE '%' || $3 || '%' OR $3 IS NULL) AND
+    (city         LIKE '%' || $4 || '%' OR $4 IS NULL)
+`
+
+type SearchUsersParams struct {
+	Column1 sql.NullString
+	Column2 sql.NullString
+	Column3 sql.NullString
+	Column4 sql.NullString
+}
+
+func (q *Queries) SearchUsers(ctx context.Context, arg SearchUsersParams) ([]User, error) {
+	rows, err := q.db.QueryContext(ctx, searchUsers,
+		arg.Column1,
+		arg.Column2,
+		arg.Column3,
+		arg.Column4,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []User
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.PhoneNumber,
+			&i.Country,
+			&i.City,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }

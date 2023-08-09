@@ -1,6 +1,8 @@
 db/sqlc/db.go -diff linguist-generated
 db/sqlc/*.sql.go -diff linguist-generated
-db/sqlc/models.go -diff linguist-generate
+db/sqlc/models.go -diff linguist-generated
+
+api/swaggerui/docs.go linguist-generated
 
 go.sum -diff linguist-generated
 go.mod -diff linguist-generated

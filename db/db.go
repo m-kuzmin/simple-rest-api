@@ -10,12 +10,13 @@ type Querier interface {
 // UserQuerier is for queries to the users table
 type UserQuerier interface {
 	CreateUsers(context.Context, []User) error
+	SearchUsers(_ context.Context, name, phoneNumber, country, city string) ([]User, error)
 }
 
 type User struct {
-	Name        string
-	PhoneNumber string
-	Country     string
-	City        string
-	ID          int64
+	ID          int64  `json:"id"`
+	Name        string `json:"name"`
+	PhoneNumber string `json:"phone_number"`
+	Country     string `json:"country"`
+	City        string `json:"city"`
 }
