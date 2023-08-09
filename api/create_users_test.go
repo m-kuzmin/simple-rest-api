@@ -1,10 +1,12 @@
 package api_test
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
 	"math/rand"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -98,7 +100,7 @@ func TestShouldRejectCreateUsersNilBody(t *testing.T) {
 
 	ginRouter := api.NewGinRouter(api.NewServer(db.NewInMemoryDB()))
 	ginRouter.ServeHTTP(recorder, req)
-	assert.Equal(t, http.StatusUnprocessableEntity, recorder.Code)
+	assert.Equal(t, http.StatusBadRequest, recorder.Code)
 }
 
 func TestShouldRejectCreateUsersEmptyBody(t *testing.T) {
@@ -113,21 +115,139 @@ func TestShouldRejectCreateUsersEmptyBody(t *testing.T) {
 
 	ginRouter := api.NewGinRouter(api.NewServer(db.NewInMemoryDB()))
 	ginRouter.ServeHTTP(recorder, req)
-	assert.Equal(t, http.StatusUnprocessableEntity, recorder.Code)
+	assert.Equal(t, http.StatusBadRequest, recorder.Code)
 }
 
-func TestShouldRejectCreateUsersBadMethod(t *testing.T) {
+func TestShouldCreateUsersWithFileUpload(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
-	req, err := http.NewRequestWithContext(ctx, http.MethodPut, "/users", nil)
+	users := []db.User{ // Users that will be saved to DB
+		{
+			ID:          rand.Int63(),
+			Name:        testutil.GenerateRandomAlphaOnlyString(10),
+			PhoneNumber: testutil.GenerateRandomAlphaOnlyString(10),
+			Country:     testutil.GenerateRandomAlphaOnlyString(10),
+			City:        testutil.GenerateRandomAlphaOnlyString(10),
+		},
+		{
+			ID:          rand.Int63(),
+			Name:        testutil.GenerateRandomAlphaOnlyString(10),
+			PhoneNumber: testutil.GenerateRandomAlphaOnlyString(10),
+			Country:     testutil.GenerateRandomAlphaOnlyString(10),
+			City:        testutil.GenerateRandomAlphaOnlyString(10),
+		},
+	}
+	csvReader := dbUsersToCSV(users)
+
+	buf := bytes.Buffer{}
+	writer := multipart.NewWriter(&buf)
+
+	part, err := writer.CreateFormFile("file", "file")
+	assert.NoError(t, err)
+
+	_, err = io.Copy(part, csvReader)
+	assert.NoError(t, err)
+
+	assert.NoError(t, writer.Close())
+
+	t.Logf("buf = %s", buf.String())
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, "/users/upload", &buf)
+	assert.Nil(t, err)
+
+	req.Header.Set("content-type", writer.FormDataContentType())
+
+	recorder := httptest.NewRecorder()
+
+	database := db.NewInMemoryDB()
+	ginRouter := api.NewGinRouter(api.NewServer(database))
+
+	ginRouter.ServeHTTP(recorder, req)
+	assert.Equal(t, http.StatusCreated, recorder.Code)
+	assert.Equal(t, users, database.Users)
+}
+
+func TestShouldRejectCreateUsersUploadNoContentType(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, "/users/upload", nil)
 	assert.Nil(t, err)
 
 	recorder := httptest.NewRecorder()
 
 	ginRouter := api.NewGinRouter(api.NewServer(db.NewInMemoryDB()))
 	ginRouter.ServeHTTP(recorder, req)
-	assert.Equal(t, http.StatusNotFound, recorder.Code)
+	assert.Equal(t, http.StatusUnsupportedMediaType, recorder.Code)
+}
+
+func TestShouldRejectCreateUsersUploadBadCSV(t *testing.T) {
+	t.Parallel()
+
+	const badCSV = ",foo,,,bar,,,\n%$*()#@$"
+
+	buf := bytes.Buffer{}
+	writer := multipart.NewWriter(&buf)
+
+	part, err := writer.CreateFormFile("file", "file")
+	assert.NoError(t, err)
+
+	_, err = part.Write([]byte(badCSV))
+	assert.NoError(t, err)
+
+	assert.NoError(t, writer.Close())
+
+	ctx := context.Background()
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, "/users/upload", &buf)
+	assert.Nil(t, err)
+
+	req.Header.Set("content-type", writer.FormDataContentType())
+
+	recorder := httptest.NewRecorder()
+
+	ginRouter := api.NewGinRouter(api.NewServer(db.NewInMemoryDB()))
+	ginRouter.ServeHTTP(recorder, req)
+	assert.Equal(t, http.StatusUnprocessableEntity, recorder.Code)
+}
+
+func TestShouldRejectCreateUsersUploadNilBody(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, "/users/upload", nil)
+	assert.Nil(t, err)
+	req.Header.Set("content-type", "multipart/form-data")
+
+	recorder := httptest.NewRecorder()
+
+	ginRouter := api.NewGinRouter(api.NewServer(db.NewInMemoryDB()))
+	ginRouter.ServeHTTP(recorder, req)
+	assert.Equal(t, http.StatusBadRequest, recorder.Code)
+}
+
+func TestShouldRejectCreateUsersUploadEmptyFile(t *testing.T) {
+	t.Parallel()
+
+	buf := bytes.Buffer{}
+	writer := multipart.NewWriter(&buf)
+
+	_, err := writer.CreateFormFile("file", "file") // we never write to this file anything
+	assert.NoError(t, err)
+
+	assert.NoError(t, writer.Close())
+
+	ctx := context.Background()
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, "/users/upload", &buf)
+	assert.Nil(t, err)
+
+	req.Header.Set("content-type", writer.FormDataContentType())
+
+	recorder := httptest.NewRecorder()
+
+	ginRouter := api.NewGinRouter(api.NewServer(db.NewInMemoryDB()))
+	ginRouter.ServeHTTP(recorder, req)
+	assert.Equal(t, http.StatusBadRequest, recorder.Code)
 }
 
 func dbUsersToCSV(users []db.User) io.Reader {

@@ -24,18 +24,19 @@ func NewServer(db db.Querier) *Server {
 	return &Server{db: db}
 }
 
+// @Tags Add user data to database
 // @Router /users [post]
-// @Summary Add users to database
-// @Description Add users to database by uploading a CSV file or sending a CSV body.
-// @Description The ID must not be already in the database.
+// @Summary Add users to database (Request body)
+// @Description Add users to database by sending a CSV body. The ID must not be already in the database.
 // @Accept text/csv
 // @Param CSV body string true "CSV string"
 // @Produce json
-// @Success 201 {object} api.CreateOrUpdateUsers.responseOk "Data was saved to database."
-// @Failure 415 {object} api.CreateOrUpdateUsers.responseErr "Content-Type must be text/csv."
-// @Failure 422 {object} api.CreateOrUpdateUsers.responseErr "Either empty or malformed body. Should be CSV."
-// @Failure 500 {object} api.CreateOrUpdateUsers.responseErr "Errors from PostgreSQL"
-func (s *Server) CreateOrUpdateUsers(ctx *gin.Context) {
+// @Success 201 {object} api.CreateUsersBody.responseOk "Data was saved to database."
+// @Failure 400 {object} api.CreateUsersBody.responseErr "Empty body not allowed"
+// @Failure 415 {object} api.CreateUsersBody.responseErr "Content-Type must be text/csv."
+// @Failure 422 {object} api.CreateUsersBody.responseErr "CSV body has syntax errors"
+// @Failure 500 {object} api.CreateUsersBody.responseErr "Errors from PostgreSQL"
+func (s *Server) CreateUsersBody(ctx *gin.Context) {
 	type responseOk struct {
 		Ok bool `json:"ok" example:"true"`
 	}
@@ -50,18 +51,18 @@ func (s *Server) CreateOrUpdateUsers(ctx *gin.Context) {
 		logging.ErrorLevel, logging.NewPrefixedLogger(logging.GlobalLogger, "(APICall PUT /users)"),
 	)
 
-	tape.Debugf("%#v", ctx.Request)
+	tape.Debugf("%v", ctx.Request)
 
 	if ctx.ContentType() != "text/csv" {
 		tape.Errorf("Wrong content type: %q", ctx.ContentType())
-		errorResponse(ctx, http.StatusUnsupportedMediaType, `Expected Content-Type header to be "text/csv"`)
+		errorResponse(ctx, http.StatusUnsupportedMediaType, "Content-Type must be text/csv")
 
 		return
 	}
 
 	if ctx.Request.Body == nil {
-		tape.Errorf("Empty body")
-		errorResponse(ctx, http.StatusUnprocessableEntity, "Empty CSV file not allowed")
+		tape.Errorf("Empty body (request.body == nil)")
+		errorResponse(ctx, http.StatusBadRequest, "Empty body not allowed")
 
 		return
 	}
@@ -76,24 +77,91 @@ func (s *Server) CreateOrUpdateUsers(ctx *gin.Context) {
 		return
 	}
 
-	if len(users) == 0 {
-		tape.Errorf("Empty users list")
-		errorResponse(ctx, http.StatusUnprocessableEntity, "User CSV file must contain at least one user")
+	s.saveUsersToDB(ctx, tape, users)
+}
+
+// @Tags Add user data to database
+// @Router /users/upload [post]
+// @Summary Add users to database (File upload)
+// @Description Add users to database by uploading a CSV file. The ID must not be already in the database.
+// @Accept multipart/form-data
+// @Param file formData file true "CSV string"
+// @Produce json
+// @Success 201 {object} api.CreateUsersBody.responseOk "Data was saved to database"
+// @Failure 400 {object} api.CreateUsersBody.responseErr "Empty body not allowed"
+// @Failure 415 {object} api.CreateUsersBody.responseErr "Content-Type must be multipart/form-data"
+// @Failure 422 {object} api.CreateUsersBody.responseErr "CSV body has syntax errors"
+// @Failure 500 {object} api.CreateUsersBody.responseErr "Errors from PostgreSQL"
+func (s *Server) CreateUsersUpload(ctx *gin.Context) {
+	tape := logging.NewTape(
+		logging.DebugLevel, logging.NewPrefixedLogger(logging.GlobalLogger, "(Tape (APICall PUT /users/upload))"),
+		logging.ErrorLevel, logging.NewPrefixedLogger(logging.GlobalLogger, "(APICall PUT /users/upload)"),
+	)
+
+	tape.Debugf("%+v", ctx.Request)
+
+	if ctx.ContentType() != "multipart/form-data" {
+		tape.Errorf("Wrong content type: %q", ctx.ContentType())
+		errorResponse(ctx, http.StatusUnsupportedMediaType, "Content-Type must be multipart/form-data")
 
 		return
 	}
 
-	tape.Debugf("Users that will be added to DB: %v", users)
-
-	err = s.db.CreateUsers(context.Background(), users)
+	fileHeader, err := ctx.FormFile("file")
 	if err != nil {
-		tape.Errorf("DB error while calling CreateUsers: %s", err)
+		tape.Errorf("Failed to get form file: %s", err)
+		errorResponse(ctx, http.StatusBadRequest,
+			"File processing error: Attached file with name 'file' not found")
+
+		return
+	}
+
+	file, err := fileHeader.Open()
+	defer func() {
+		if err = file.Close(); err != nil {
+			tape.Errorf("Failed to close file")
+		}
+	}()
+
+	if err != nil {
+		tape.Errorf("Failed to open form file: %s", err)
+		errorResponse(ctx, http.StatusInternalServerError, "File processing error: Failed to open attached file")
+
+		return
+	}
+
+	csvReader := csv.NewReader(file)
+
+	users, err := ParseUsersCSV(csvReader)
+	if err != nil {
+		tape.Errorf("CSV parsing error: %s", err)
+		errorResponsef(ctx, http.StatusUnprocessableEntity, "CSV parsing error: %s", err)
+
+		return
+	}
+
+	s.saveUsersToDB(ctx, tape, users)
+}
+
+func (s *Server) saveUsersToDB(ctx *gin.Context, logger logging.Logger, users []db.User) {
+	if len(users) == 0 {
+		logger.Errorf("Empty users list")
+		errorResponse(ctx, http.StatusBadRequest, "User CSV file must contain at least one user")
+
+		return
+	}
+
+	logger.Debugf("Users that will be added to DB: %v", users)
+
+	err := s.db.CreateUsers(context.Background(), users)
+	if err != nil {
+		logger.Errorf("DB error while calling CreateUsers: %s", err)
 		errorResponsef(ctx, http.StatusInternalServerError, "Database error: %s", err)
 
 		return
 	}
 
-	tape.Infof("Returning StatusCreated")
+	logger.Infof("Returning StatusCreated")
 	okResponse(ctx, http.StatusCreated)
 }
 
@@ -127,6 +195,7 @@ func ParseUsersCSV(reader *csv.Reader) ([]db.User, error) {
 	return users, nil
 }
 
+// @Tags Search
 // @Router /users/search [get]
 // @Summary Search the database by column(s)
 // @Description Returns all rows that contain the substring from the query in the respective column
